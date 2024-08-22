@@ -14,6 +14,7 @@ import { ServicePet } from "./entities/service-pet";
 import { User } from "./entities/user.entity";
 import { VaccinePet } from "./entities/vaccine-pet";
 import { Vaccine } from "./entities/vaccine.entity";
+import { Image } from "./entities/image-entity";
 
 export const entities = [
   Pet,
@@ -32,4 +33,5 @@ export const entities = [
   User,
   Vaccine,
   VaccinePet,
+  Image,
 ];

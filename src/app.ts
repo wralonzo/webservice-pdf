@@ -1,11 +1,14 @@
-import fastify, { FastifyInstance } from "fastify";
+import fastify, { FastifyInstance, FastifyReply } from "fastify";
 import { AppDataSource } from "./plugins/db.pluging";
 import * as dotenv from "dotenv";
 import { IncomingMessage, Server, ServerResponse } from "http";
-import { TypeORMController } from "./services/pet/pet.service";
+import formbody from "@fastify/formbody";
+import multer from "fastify-multer";
+import path from "path";
+import { TypeORMImageController } from "./services/pet/image.service";
 
 const server: FastifyInstance<Server, IncomingMessage, ServerResponse> =
-  fastify();
+  fastify({ logger: true });
 dotenv.config();
 
 server.register((instance, opts, next) => {
@@ -16,75 +19,52 @@ server.register((instance, opts, next) => {
     })
     .catch((err) => next(err));
 });
-
-server.get("/pdf/:filename", async (req: any, reply) => {
-  const PDFDocument = require("pdfkit");
-  const doc = new PDFDocument();
-
-  const data = await new TypeORMController().findData(+req.params.filename);
-
-  reply.type("application/pdf");
-  reply.header(
-    "content-disposition",
-    `attachment; filename="${req.params.filename}"`
-  );
-
-  doc.pipe(reply.raw);
-
-  doc.text(`Reporte historico de la mascota`, { align: "center" });
-  doc.text(`\n`);
-  doc.text(`\n`);
-
-  doc.text(`Listado de consultas`);
-  for (const consulta of data.consultas) {
-    doc.text(`Consulta: ${consulta.name}`);
-    doc.text(`Descripcion: ${consulta.description}`);
-    doc.text(`Fecha: ${consulta.dateCreated}`);
-    doc.text(`\n`);
+server.register(formbody);
+server.addContentTypeParser(
+  "multipart/form-data",
+  {
+    bodyLimit: 1048576,
+  },
+  (req, payload, done) => {
+    const formData = new FormData();
+    done(null, formData);
   }
-  doc.text(`\n`);
+);
 
-  doc.text(`\nListado de servicios`);
-  for (const servicio of data.servicios) {
-    doc.text(`Nombre: ${servicio.name}`);
-    doc.text(`Servicio: ${servicio.servicio}`);
-    doc.text(`Fecha: ${servicio.dateCreated}`);
-    doc.text(`\n`);
-  }
-  doc.text(`\n`);
-
-  doc.text(`\nListado de examenes`);
-  for (const examen of data.examenes) {
-    doc.text(`Diagnostico: ${examen.diagnostico}`);
-    doc.text(`Motivo: ${examen.motivo}`);
-    doc.text(`Fecha: ${examen.createdAt}`);
-    doc.text(`\n`);
-  }
-  doc.text(`\n`);
-
-  doc.text(`\nListado de constancias`);
-  for (const constancia of data.constancias) {
-    doc.text(`Comentario: ${constancia.comentario}`);
-    doc.text(`Fecha: ${constancia.createdAt}`);
-    doc.text(`\n`);
-  }
-  doc.text(`\n`);
-
-  doc.text(`\nListado de examenes`);
-  for (const reservacion of data.reservaciones) {
-    doc.text(`Diagnostico: ${reservacion.comentario}`);
-    doc.text(`Motivo: ${reservacion.estado}`);
-    doc.text(`Fecha: ${reservacion.createdAt}`);
-    doc.text(`Hora inicio: ${reservacion.horaFin}`);
-    doc.text(`Hora fin: ${reservacion.horaFin}`);
-    doc.text(`\n`);
-  }
-
-  doc.text("");
-  doc.text("");
-
-  doc.end();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const fullPath = path.resolve(process.cwd());
+    cb(null, `${fullPath}/src/uploads`);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]
+    );
+  },
 });
+
+const upload = multer({ storage: storage });
+
+server.post(
+  "/upload",
+  { preHandler: upload.single("file") },
+  async (request: any, reply: FastifyReply) => {
+    const payload = {
+      tag: request.body.tag,
+      name: request.file.filename,
+      idReg: +request.body.idReg,
+      user: +request.body.user,
+    };
+    
+    const data = new TypeORMImageController().create(payload);
+    reply.send({
+      file: request.file,
+      status: 200,
+    });
+  }
+);
 
 server.listen({ port: 8080 }, (err, address) => {
   if (err) {
