@@ -2,10 +2,12 @@ import fastify, { FastifyInstance, FastifyReply } from "fastify";
 import { AppDataSource } from "./plugins/db.pluging";
 import * as dotenv from "dotenv";
 import { IncomingMessage, Server, ServerResponse } from "http";
-import formbody from "@fastify/formbody";
 import multer from "fastify-multer";
-import path from "path";
+import path, { join } from "path";
 import { TypeORMImageController } from "./services/pet/image.service";
+import fs, { createReadStream } from "fs";
+const { ReadableStream } = require("node:stream/web");
+import staticPlugin from "@fastify/static";
 
 const server: FastifyInstance<Server, IncomingMessage, ServerResponse> =
   fastify({ logger: true });
@@ -19,7 +21,6 @@ server.register((instance, opts, next) => {
     })
     .catch((err) => next(err));
 });
-server.register(formbody);
 server.addContentTypeParser(
   "multipart/form-data",
   {
@@ -30,6 +31,11 @@ server.addContentTypeParser(
     done(null, formData);
   }
 );
+
+server.register(staticPlugin, {
+  root: join(__dirname, "uploads"),
+  prefix: "/public/",
+});
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -57,14 +63,19 @@ server.post(
       idReg: +request.body.idReg,
       user: +request.body.user,
     };
-    
-    const data = new TypeORMImageController().create(payload);
-    reply.send({
-      file: request.file,
-      status: 200,
-    });
+
+    const data = await new TypeORMImageController().create(payload);
+    reply.send(data);
   }
 );
+
+server.get("/urls", async (request: any, reply) => {
+  const data = await new TypeORMImageController().find(
+    request.query.tag,
+    +request.query.idReg
+  );
+  reply.send({ data });
+});
 
 server.listen({ port: 8080 }, (err, address) => {
   if (err) {
