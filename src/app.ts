@@ -5,13 +5,18 @@ import { IncomingMessage, Server, ServerResponse } from "http";
 import multer from "fastify-multer";
 import path, { join } from "path";
 import { TypeORMImageController } from "./services/pet/image.service";
-import fs, { createReadStream } from "fs";
-const { ReadableStream } = require("node:stream/web");
 import staticPlugin from "@fastify/static";
+import cors from 'fastify-cors';
 
 const server: FastifyInstance<Server, IncomingMessage, ServerResponse> =
   fastify({ logger: true });
 dotenv.config();
+
+server.register(cors, {
+  origin: "*",
+  methods: "*",
+  allowedHeaders: "*",
+});
 
 server.register((instance, opts, next) => {
   AppDataSource.initialize()

@@ -24,6 +24,7 @@
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-cli": "^6.3.0",
+    "fastify-cors": "^3.0.3",
     "fastify-jwt": "^4.2.0",
     "fastify-multer": "^2.0.3",
     "fastify-plugin": "^4.5.1",
