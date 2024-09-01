@@ -39,7 +39,7 @@ export class TypeORMImageController {
       const response = data.map((item) => {
         return {
           id: item.id,
-          url: `http://localhost:8080/public/${item.name}`,
+          url: `http://localhost:8081/public/${item.name}`,
         };
       });
       return response;
