@@ -4,6 +4,7 @@ import { Client } from "./entities/client.entity";
 import { Consult } from "./entities/consult.entity";
 import { Constancy } from "./entities/contancy.entity";
 import { Examen } from "./entities/examen.entity";
+import { Medicamento } from "./entities/medicamentos.entity";
 import { Pet } from "./entities/pet.entity";
 import { Product } from "./entities/product.entity";
 import { Reservation } from "./entities/reservation.entity";
@@ -14,6 +15,7 @@ import { ServicePet } from "./entities/service-pet";
 import { User } from "./entities/user.entity";
 import { VaccinePet } from "./entities/vaccine-pet";
 import { Vaccine } from "./entities/vaccine.entity";
+import { Image } from "./entities/image-entity";
 
 export const entities = [
   Pet,
@@ -32,4 +34,6 @@ export const entities = [
   User,
   Vaccine,
   VaccinePet,
+  Medicamento,
+  Image,
 ];

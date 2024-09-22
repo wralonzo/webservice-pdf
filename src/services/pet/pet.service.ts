@@ -1,6 +1,8 @@
 import { DataSource } from "typeorm";
 import { Pet } from "../../typeorm/entities/pet.entity";
 import { entities } from "../../typeorm/typeorm.entities";
+import { Medicamento } from "../../typeorm/entities/medicamentos.entity";
+import { Image } from "../../typeorm/entities/image-entity";
 
 export class TypeORMController {
   private dataSource: DataSource;
@@ -33,6 +35,14 @@ export class TypeORMController {
         id: id,
       },
     });
+
+    const dataMedicamentos = await this.dataSource
+      .getRepository(Medicamento)
+      .find({
+        where: {
+          id: id,
+        },
+      });
 
     const consultas = data.consultsFk.map((itemc) => {
       return {
@@ -79,6 +89,7 @@ export class TypeORMController {
         createdAt: itemc.createdAt,
       };
     });
+    const images = await this.findImages("pet", id);
     return {
       id: data.id,
       name: data.name,
@@ -90,6 +101,28 @@ export class TypeORMController {
       reservaciones,
       constancias,
       servicios,
+      dataMedicamentos,
+      images,
     };
+  }
+
+  async findImages(tag: string, idReg: number) {
+    try {
+      const data = await this.dataSource.getRepository(Image).find({
+        where: {
+          tag: tag,
+          idReg: idReg,
+        },
+      });
+      const response = data.map((item) => {
+        return {
+          id: item.id,
+          url: `${process.env.HOST_ASSETS}${item.name}`,
+        };
+      });
+      return response;
+    } catch (error) {
+      return [];
+    }
   }
 }
