@@ -40,7 +40,7 @@ export class TypeORMController {
       .getRepository(Medicamento)
       .find({
         where: {
-          id: id,
+          idPet: id,
         },
       });
 
